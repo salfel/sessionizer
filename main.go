@@ -2,16 +2,11 @@ package main
 
 import (
 	"fmt"
-
-	tmux "github.com/jubnzv/go-tmux"
+	gotmux "github.com/GianlucaP106/gotmux/gotmux"
 )
 
 const DIRPATH = "/home/felix/Projects"
 const PROJECT_NAME = "fenix"
-
-type Server struct {
-	tmuxServer *tmux.Server
-}
 
 func main() {
 	exists, config := LoadConfig(CONFIG_FILE)
@@ -24,128 +19,80 @@ func main() {
 }
 
 func loadSession(name string, config *Config) error {
-	session, err := createSession(name)
+	tmux := getTmux()
+
+	session, err := createSession(name, config)
 	if err != nil {
-		fmt.Println("Error attaching session:", err)
+		fmt.Println("Error creating session:", err)
 		return err
 	}
 
-	if config != nil {
-		applyConfig(session, *config)
-	} else {
-		windows, err := session.ListWindows()
-		if err != nil {
-			fmt.Println("Error listing windows:", err)
-			return err
-		}
-
-		for _, window := range windows {
-			switchDirectory("", window)
-		}
-	}
-
-	err = session.AttachSession()
-	if err != nil {
-		fmt.Println("Error attaching session:", err)
-		return err
-	}
+	tmux.SwitchClient(&gotmux.SwitchClientOptions{TargetSession: session.Name})
 
 	return nil
 }
 
-func createSession(name string) (tmux.Session, error) {
-	server := new(tmux.Server)
+func createSession(name string, config *Config) (*gotmux.Session, error) {
+	tmux := getTmux()
 
-	exists, session := getSessionByName(name)
+	startWindow := config.Windows[0]
 
-	if exists {
+	session, err := tmux.Session(name)
+	if session == nil {
+		session, err = tmux.NewSession(&gotmux.SessionOptions{
+			Name:           PROJECT_NAME,
+			StartDirectory: fmt.Sprintf("%s/%s/%s", DIRPATH, PROJECT_NAME, startWindow.Path),
+			ShellCommand:   startWindow.Cmd,
+		})
+
+		if err != nil {
+			fmt.Println("Error creating session:", err)
+			return nil, err
+		}
+	} else {
 		return session, nil
 	}
 
-	session, err := server.NewSession(name)
-	if err != nil {
-		return tmux.Session{}, fmt.Errorf("error creating session: %w", err)
+	for idx, windowConfig := range config.Windows {
+		if idx == 0 {
+			windows, err := session.ListWindows()
+			if err != nil {
+				fmt.Println("Error getting window:", err)
+				return nil, err
+			}
+
+			windows[0].Rename(windowConfig.Name)
+
+			continue
+		}
+
+		window, err := session.NewWindow(&gotmux.NewWindowOptions{
+			WindowName:     windowConfig.Name,
+			StartDirectory: fmt.Sprintf("%s/%s/%s", DIRPATH, PROJECT_NAME, startWindow.Path),
+			DoNotAttach:    true,
+		})
+		if err != nil {
+			fmt.Println("Error creating window:", err)
+			return nil, err
+		}
+
+		panes, err := window.ListPanes()
+		if err != nil {
+			fmt.Println("Error listing panes:", err)
+			return nil, err
+		}
+
+		panes[0].SendKeys(windowConfig.Cmd + "\n")
 	}
 
 	return session, nil
 }
 
-func applyConfig(session tmux.Session, config Config) error {
-	for _, windowConfig := range config.Windows {
-		window, err := session.NewWindow(windowConfig.Name)
-		if err != nil {
-			fmt.Println("Error creating window:", err)
-			return err
-		}
-
-		switchDirectory(windowConfig.Path, window)
-
-		panes, err := window.ListPanes()
-		if err != nil {
-			fmt.Println("Error listing panes:", err)
-			return err
-		}
-
-		err = panes[0].RunCommand(windowConfig.Cmd)
-		if err != nil {
-			fmt.Println("Error running command:", err)
-			return err
-		}
-	}
-
-	windows, err := session.ListWindows()
+func getTmux() *gotmux.Tmux {
+	tmux, err := gotmux.DefaultTmux()
 	if err != nil {
-		fmt.Println("Error listing windows:", err)
-		return err
+		panic(err)
 	}
 
-	panes, err := windows[0].ListPanes()
-	if err != nil {
-		fmt.Println("Error listing panes:", err)
-		return err
-	}
-
-	err = panes[0].RunCommand("exit")
-	if err != nil {
-		fmt.Println("Error running command:", err)
-		return err
-	}
-
-	return nil
-}
-
-func switchDirectory(name string, pane tmux.Window) error {
-	panes, err := pane.ListPanes()
-	if err != nil {
-		fmt.Println("Error listing panes:", err)
-		return err
-	}
-
-	for _, pane := range panes {
-		err = pane.RunCommand(fmt.Sprintf("cd %s/%s/%s", DIRPATH, PROJECT_NAME, name))
-		if err != nil {
-			fmt.Println("Error switching directory:", err)
-			return err
-		}
-	}
-
-	return nil
-}
-
-func getSessionByName(name string) (bool, tmux.Session) {
-	server := new(tmux.Server)
-
-	sessions, err := server.ListSessions()
-	if err != nil {
-		fmt.Println("Error listing sessions:", err)
-		return false, tmux.Session{}
-	}
-
-	for _, session := range sessions {
-		if session.Name == name {
-			return true, session
-		}
-	}
-
-	return false, tmux.Session{}
+	return tmux
 }

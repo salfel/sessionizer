@@ -21,7 +21,6 @@ const CONFIG_FILE = "sessionizer.toml"
 
 func LoadConfig(path string) (bool, Config) {
 	path = fmt.Sprintf("%s/%s/%s", DIRPATH, PROJECT_NAME, path)
-	fmt.Println(path)
 
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -29,16 +28,12 @@ func LoadConfig(path string) (bool, Config) {
 		return false, Config{}
 	}
 
-	fmt.Println(string(data))
-
 	var config Config
 	err = toml.Unmarshal(data, &config)
 	if err != nil {
 		fmt.Println("Error unmarshalling config file:", err)
 		return false, Config{}
 	}
-
-	fmt.Println(config)
 
 	return true, config
 }
