@@ -27,8 +27,8 @@ func createSession(name string, config *Config) (*gotmux.Session, error) {
 	session, err := tmux.Session(name)
 	if session == nil {
 		session, err = tmux.NewSession(&gotmux.SessionOptions{
-			Name:           PROJECT_NAME,
-			StartDirectory: fmt.Sprintf("%s/%s/%s", DIRPATH, PROJECT_NAME, startWindow.Path),
+			Name:           name,
+			StartDirectory: fmt.Sprintf("%s/%s/%s", DIRPATH, name, startWindow.Path),
 			ShellCommand:   startWindow.Cmd,
 		})
 
@@ -55,7 +55,7 @@ func createSession(name string, config *Config) (*gotmux.Session, error) {
 
 		window, err := session.NewWindow(&gotmux.NewWindowOptions{
 			WindowName:     windowConfig.Name,
-			StartDirectory: fmt.Sprintf("%s/%s/%s", DIRPATH, PROJECT_NAME, startWindow.Path),
+			StartDirectory: fmt.Sprintf("%s/%s/%s", DIRPATH, name, startWindow.Path),
 			DoNotAttach:    true,
 		})
 		if err != nil {
