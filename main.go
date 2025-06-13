@@ -17,11 +17,9 @@ func main() {
 		return
 	}
 
-	exists, config := LoadConfig(fmt.Sprintf("%s/%s", DIRPATH, project))
+	config, ok := LoadConfig(fmt.Sprintf("%s/%s", DIRPATH, project))
 
-	if !exists {
-		loadSession(project, nil)
-	} else {
+	if ok {
 		loadSession(project, &config)
 	}
 }

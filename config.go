@@ -18,23 +18,34 @@ type Window struct {
 }
 
 const CONFIG_FILE = "sessionizer.toml"
+const DEFAULT_CONFIG = `
+[[windows]]
+name = "Editor"
+cmd = "nvim"
 
-func LoadConfig(path string) (bool, Config) {
+[[windows]]
+name = "Git"
+cmd = "lazygit"
+
+[[windows]]
+name = "Terminal"
+`
+
+func LoadConfig(path string) (Config, bool) {
 	path = fmt.Sprintf("%s/%s", path, CONFIG_FILE)
 	fmt.Print("Loading config file: ")
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Println("Error reading config file:", err)
-		return false, Config{}
+		data = []byte(DEFAULT_CONFIG)
 	}
 
 	var config Config
 	err = toml.Unmarshal(data, &config)
 	if err != nil {
 		fmt.Println("Error unmarshalling config file:", err)
-		return false, Config{}
+		return Config{}, false
 	}
 
-	return true, config
+	return config, true
 }
