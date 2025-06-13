@@ -63,6 +63,10 @@ func createSession(name string, config *Config) (*gotmux.Session, error) {
 			return nil, err
 		}
 
+		if windowConfig.Cmd == "" {
+			continue
+		}
+
 		panes, err := window.ListPanes()
 		if err != nil {
 			fmt.Println("Error listing panes:", err)
