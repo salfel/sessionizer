@@ -26,10 +26,14 @@ func createSession(name string, config *Config) (*gotmux.Session, error) {
 
 	session, err := tmux.Session(name)
 	if session == nil {
+		startCmd := ""
+		if len(startWindow.Cmd) > 0 {
+			startCmd = startWindow.Cmd[0]
+		}
 		session, err = tmux.NewSession(&gotmux.SessionOptions{
 			Name:           name,
 			StartDirectory: fmt.Sprintf("%s/%s/%s", DIRPATH, name, startWindow.Path),
-			ShellCommand:   startWindow.Cmd,
+			ShellCommand:   startCmd,
 		})
 
 		if err != nil {
@@ -50,6 +54,19 @@ func createSession(name string, config *Config) (*gotmux.Session, error) {
 
 			windows[0].Rename(windowConfig.Name)
 
+			panes, err := windows[0].ListPanes()
+			if err != nil {
+				fmt.Println("Error listing panes:", err)
+				return nil, err
+			}
+
+			for i, cmd := range windowConfig.Cmd {
+				if i == 0 {
+					continue
+				}
+				panes[0].SendKeys(cmd + "\n")
+			}
+
 			continue
 		}
 
@@ -63,7 +80,7 @@ func createSession(name string, config *Config) (*gotmux.Session, error) {
 			return nil, err
 		}
 
-		if windowConfig.Cmd == "" {
+		if len(windowConfig.Cmd) == 0 {
 			continue
 		}
 
@@ -73,7 +90,9 @@ func createSession(name string, config *Config) (*gotmux.Session, error) {
 			return nil, err
 		}
 
-		panes[0].SendKeys(windowConfig.Cmd + "\n")
+		for _, cmd := range windowConfig.Cmd {
+			panes[0].SendKeys(cmd + "\n")
+		}
 	}
 
 	return session, nil
