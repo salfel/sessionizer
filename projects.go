@@ -24,8 +24,9 @@ func (p Path) Segments() []string {
 }
 
 type Project struct {
-	Name string
-	Path Path
+	Name  string
+	Path  Path
+	Count int
 }
 
 func getProject(searchPaths []Path) (Project, bool) {
@@ -36,17 +37,15 @@ func getProject(searchPaths []Path) (Project, bool) {
 
 	projects := make(map[string]Project, 0)
 	for _, path := range searchPaths {
-		for _, projectPath := range findProjects(path) {
-			name := projectPath.Segments()[len(projectPath.Segments())-1]
-			if strings.Contains(name, "/") {
-				name = strings.Split(name, "/")[1]
+		for _, project := range findProjects(path) {
+			if project.Name == "" {
+				fmt.Println("2newline in string", project.Path, project.Count)
 			}
-			newProject := Project{Name: name, Path: projectPath}
-			if _, ok := projects[name]; ok && projects[name].Path != projectPath {
-				oldProject := projects[name]
-				delete(projects, name)
+			if _, ok := projects[project.Name]; ok && projects[project.Name].Path != project.Path {
+				oldProject := projects[project.Name]
+				delete(projects, project.Name)
 
-				for _, project := range []Project{oldProject, newProject} {
+				for _, project := range []Project{oldProject, project} {
 					if !strings.Contains(project.Name, "/") {
 						segments := project.Path.Segments()
 						prefix := segments[len(segments)-2]
@@ -55,18 +54,34 @@ func getProject(searchPaths []Path) (Project, bool) {
 					projects[project.Name] = project
 				}
 			} else {
-				projects[name] = newProject
+				projects[project.Name] = project
 			}
 		}
 	}
 
-	projectsList := make([]string, 0)
-	for project := range projects {
-		projectsList = append(projectsList, project)
+	projectList := make([]Project, 0)
+	for _, project := range projects {
+		projectList = append(projectList, project)
+	}
+
+	sort.Slice(projectList, func(i, j int) bool {
+		if projectList[i].Count != projectList[j].Count {
+			return projectList[i].Count > projectList[j].Count
+		}
+
+		return projectList[i].Name < projectList[j].Name
+	})
+
+	projectNames := make([]string, 0)
+	for _, project := range projectList {
+		projectNames = append(projectNames, project.Name)
+		if project.Name == "" {
+			fmt.Println("newline in string", project.Path, project.Count)
+		}
 	}
 
 	cmd := exec.Command("fzf")
-	cmd.Stdin = bytes.NewBufferString(strings.Join(projectsList, "\n"))
+	cmd.Stdin = bytes.NewBufferString(strings.Join(projectNames, "\n"))
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -92,13 +107,13 @@ func getProject(searchPaths []Path) (Project, bool) {
 	return projects[projectName], true
 }
 
-func findProjects(searchPath Path) []Path {
+func findProjects(searchPath Path) []Project {
 	dir, err := os.ReadDir(string(searchPath))
 	if err != nil {
 		panic(err)
 	}
 
-	projects := loadData()
+	data := loadData()
 
 	for _, entry := range dir {
 		if !entry.IsDir() {
@@ -111,20 +126,21 @@ func findProjects(searchPath Path) []Path {
 			continue
 		}
 
-		if _, ok := projects[path]; !ok {
-			projects[path] = 0
+		if _, ok := data[path]; !ok {
+			data[path] = 0
 		}
 	}
 
-	keys := make([]Path, 0)
-	for project := range projects {
-		keys = append(keys, project)
+	projects := make([]Project, 0)
+	for project := range data {
+		name := project.Segments()[len(project.Segments())-1]
+		if strings.Contains(name, "/") {
+			name = strings.Split(name, "/")[1]
+		}
+		projects = append(projects, Project{Name: name, Path: Path(project), Count: data[project]})
 	}
 
-	sortedProjects := ByCount{counts: projects, keys: keys}
-	sort.Sort(sortedProjects)
-
-	return sortedProjects.keys
+	return projects
 }
 
 func hasGitRepo(path string) bool {
