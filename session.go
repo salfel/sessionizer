@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	gotmux "github.com/GianlucaP106/gotmux/gotmux"
 )
 
@@ -14,7 +16,12 @@ func loadSession(project Project, config *Config) error {
 		return err
 	}
 
-	tmux.SwitchClient(&gotmux.SwitchClientOptions{TargetSession: session.Name})
+	_, found := os.LookupEnv("TMUX")
+	if found {
+		tmux.SwitchClient(&gotmux.SwitchClientOptions{TargetSession: session.Name})
+	} else {
+		session.Attach()
+	}
 
 	return nil
 }
