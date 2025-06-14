@@ -33,7 +33,7 @@ func loadDefaultConfig() (Config, bool) {
 		return Config{}, false
 	}
 
-	defaultConfigPath := fmt.Sprintf("%s/%s", configDir, GLOBAL_CONFIG)
+	defaultConfigPath := Path(configDir).Join(GLOBAL_CONFIG)
 	var config Config
 	err = loadConfigFromPath(defaultConfigPath, &config)
 
@@ -50,8 +50,8 @@ func loadDefaultConfig() (Config, bool) {
 	return config, true
 }
 
-func loadConfig(path string) (WindowConfig, bool) {
-	path = fmt.Sprintf("%s/%s", path, CONFIG_FILE)
+func loadConfig(path Path) (WindowConfig, bool) {
+	path = path.Join(CONFIG_FILE)
 
 	var localConfig WindowConfig
 	err := loadConfigFromPath(path, &localConfig)
@@ -65,8 +65,8 @@ func loadConfig(path string) (WindowConfig, bool) {
 	return localConfig, true
 }
 
-func loadConfigFromPath[T any](path string, config *T) error {
-	data, err := os.ReadFile(path)
+func loadConfigFromPath[T any](path Path, config *T) error {
+	data, err := os.ReadFile(string(path))
 	if err != nil {
 		return err
 	}

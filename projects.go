@@ -9,9 +9,26 @@ import (
 	"strings"
 )
 
+type Path string
+
+func (p Path) String() string {
+	return string(p)
+}
+
+func (p Path) IsDir() bool {
+	return strings.HasSuffix(p.String(), "/")
+}
+
+func (p Path) Join(path string) Path {
+	if p.IsDir() {
+		return Path(fmt.Sprintf("%s%s", p.String(), path))
+	}
+	return Path(fmt.Sprintf("%s/%s", p.String(), path))
+}
+
 type Project struct {
 	Name string
-	Path string
+	Path Path
 }
 
 func getProject(searchPaths []string) (Project, bool) {
@@ -23,14 +40,14 @@ func getProject(searchPaths []string) (Project, bool) {
 	projects := make(map[string]Project, 0)
 	for _, path := range searchPaths {
 		for _, project := range findProjects(path) {
-			newProject := Project{Name: project, Path: fmt.Sprintf("%s/%s", path, project)}
+			newProject := Project{Name: project, Path: Path(fmt.Sprintf("%s/%s", path, project))}
 			if _, ok := projects[project]; ok {
 				oldProject := projects[project]
 				delete(projects, project)
 
 				for _, project := range []Project{oldProject, newProject} {
 					if !strings.Contains(project.Name, "/") {
-						segments := strings.Split(project.Path, "/")
+						segments := strings.Split(string(project.Path), "/")
 						prefix := segments[len(segments)-2]
 						project.Name = fmt.Sprintf("%s/%s", prefix, project.Name)
 					}
