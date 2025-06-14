@@ -19,5 +19,5 @@ func main() {
 
 	loadSession(project, &config)
 
-	updateData(project.Name)
+	updateData(project.Path)
 }

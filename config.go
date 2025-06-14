@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	SearchPaths []string `toml:"search_paths"`
+	SearchPaths []Path   `toml:"search_paths"`
 	Windows     []Window `toml:"windows"`
 }
 

@@ -15,15 +15,12 @@ func (p Path) String() string {
 	return string(p)
 }
 
-func (p Path) IsDir() bool {
-	return strings.HasSuffix(p.String(), "/")
+func (p Path) Join(path string) Path {
+	return Path(fmt.Sprintf("%s/%s", p.String(), path))
 }
 
-func (p Path) Join(path string) Path {
-	if p.IsDir() {
-		return Path(fmt.Sprintf("%s%s", p.String(), path))
-	}
-	return Path(fmt.Sprintf("%s/%s", p.String(), path))
+func (p Path) Segments() []string {
+	return strings.Split(p.String(), "/")
 }
 
 type Project struct {
@@ -31,7 +28,7 @@ type Project struct {
 	Path Path
 }
 
-func getProject(searchPaths []string) (Project, bool) {
+func getProject(searchPaths []Path) (Project, bool) {
 	if len(searchPaths) == 0 {
 		fmt.Println("No search paths found, please specify at least one")
 		return Project{}, false
@@ -39,22 +36,26 @@ func getProject(searchPaths []string) (Project, bool) {
 
 	projects := make(map[string]Project, 0)
 	for _, path := range searchPaths {
-		for _, project := range findProjects(path) {
-			newProject := Project{Name: project, Path: Path(fmt.Sprintf("%s/%s", path, project))}
-			if _, ok := projects[project]; ok {
-				oldProject := projects[project]
-				delete(projects, project)
+		for _, projectPath := range findProjects(path) {
+			name := projectPath.Segments()[len(projectPath.Segments())-1]
+			if strings.Contains(name, "/") {
+				name = strings.Split(name, "/")[1]
+			}
+			newProject := Project{Name: name, Path: projectPath}
+			if _, ok := projects[name]; ok {
+				oldProject := projects[name]
+				delete(projects, name)
 
 				for _, project := range []Project{oldProject, newProject} {
 					if !strings.Contains(project.Name, "/") {
-						segments := strings.Split(string(project.Path), "/")
+						segments := project.Path.Segments()
 						prefix := segments[len(segments)-2]
 						project.Name = fmt.Sprintf("%s/%s", prefix, project.Name)
 					}
 					projects[project.Name] = project
 				}
 			} else {
-				projects[project] = newProject
+				projects[name] = newProject
 			}
 		}
 	}
@@ -91,8 +92,8 @@ func getProject(searchPaths []string) (Project, bool) {
 	return projects[projectName], true
 }
 
-func findProjects(searchPath string) []string {
-	dir, err := os.ReadDir(searchPath)
+func findProjects(searchPath Path) []Path {
+	dir, err := os.ReadDir(string(searchPath))
 	if err != nil {
 		panic(err)
 	}
@@ -104,16 +105,18 @@ func findProjects(searchPath string) []string {
 			continue
 		}
 
-		if !hasGitRepo(fmt.Sprintf("%s/%s", searchPath, entry.Name())) {
+		path := Path(fmt.Sprintf("%s/%s", searchPath, entry.Name()))
+
+		if !hasGitRepo(string(path)) {
 			continue
 		}
 
-		if _, ok := projects[entry.Name()]; !ok {
-			projects[entry.Name()] = 0
+		if _, ok := projects[path]; !ok {
+			projects[path] = 0
 		}
 	}
 
-	keys := make([]string, 0)
+	keys := make([]Path, 0)
 	for project := range projects {
 		keys = append(keys, project)
 	}
@@ -141,8 +144,8 @@ func hasGitRepo(path string) bool {
 }
 
 type ByCount struct {
-	counts map[string]int
-	keys   []string
+	counts map[Path]int
+	keys   []Path
 }
 
 func (c ByCount) Len() int {

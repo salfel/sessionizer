@@ -11,50 +11,50 @@ import (
 
 const DATA_FILE = ".sessionizer.toml"
 
-func storeData(projects map[string]int) {
+func storeData(projects map[Path]int) {
 	data, err := toml.Marshal(projects)
 	if err != nil {
 		fmt.Println("Error marshalling config file:", err)
 		return
 	}
 
-	err = os.WriteFile(getDataPath(), data, 0644)
+	err = os.WriteFile(string(getDataPath()), data, 0644)
 	if err != nil {
 		fmt.Println("Error writing config file:", err)
 		return
 	}
 }
 
-func loadData() map[string]int {
-	data, err := os.ReadFile(getDataPath())
+func loadData() map[Path]int {
+	data, err := os.ReadFile(string(getDataPath()))
 	if err != nil {
-		return map[string]int{}
+		return map[Path]int{}
 	}
 
-	var projects map[string]int
+	var projects map[Path]int
 	err = toml.Unmarshal(data, &projects)
 	if err != nil {
 		fmt.Println("Error unmarshalling config file:", err)
-		return map[string]int{}
+		return map[Path]int{}
 	}
 
 	return projects
 }
 
-func updateData(project string) {
+func updateData(projectPath Path) {
 	data := loadData()
-	if _, ok := data[project]; !ok {
-		data[project] = 1
+	if _, ok := data[projectPath]; !ok {
+		data[projectPath] = 1
 	} else {
-		data[project]++
+		data[projectPath]++
 	}
 	storeData(data)
 }
 
-func getDataPath() string {
+func getDataPath() Path {
 	homeDir := getHomeDir()
 
-	return fmt.Sprintf("%s/%s", homeDir, DATA_FILE)
+	return Path(homeDir).Join(DATA_FILE)
 }
 
 func getHomeDir() string {
