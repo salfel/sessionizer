@@ -13,7 +13,7 @@ func main() {
 		return
 	}
 
-	config, ok := LoadConfig(fmt.Sprintf("%s/%s", DIRPATH, project))
+	config, ok := loadConfig(fmt.Sprintf("%s/%s", DIRPATH, project))
 
 	if ok {
 		loadSession(project, &config)

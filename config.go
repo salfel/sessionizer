@@ -9,6 +9,11 @@ import (
 )
 
 type Config struct {
+	SearchPaths []string `toml:"search_paths"`
+	Windows     []Window `toml:"windows"`
+}
+
+type WindowConfig struct {
 	Windows []Window `toml:"windows"`
 }
 
@@ -18,42 +23,72 @@ type Window struct {
 	Cmd  []string `toml:"cmd"`
 }
 
+const GLOBAL_CONFIG = "sessionizer/config.toml"
 const CONFIG_FILE = "sessionizer.toml"
-const DEFAULT_CONFIG = `
-[[windows]]
-name = "Editor"
-cmd = ["nvim"]
 
-[[windows]]
-name = "Git"
-cmd = ["lazygit"]
-
-[[windows]]
-name = "Terminal"
-`
-
-func LoadConfig(path string) (Config, bool) {
-	path = fmt.Sprintf("%s/%s", path, CONFIG_FILE)
-
-	data, err := os.ReadFile(path)
+func loadConfig(path string) (Config, bool) {
+	configDir, err := os.UserConfigDir()
 	if err != nil {
-		data = []byte(DEFAULT_CONFIG)
-	}
-
-	var config Config
-	err = toml.Unmarshal(data, &config)
-	if err != nil {
-		fmt.Println("Error unmarshalling config file:", err)
+		fmt.Println("Error getting user config dir:", err)
 		return Config{}, false
 	}
 
-	for i, window := range config.Windows {
+	defaultConfigPath := fmt.Sprintf("%s/%s", configDir, GLOBAL_CONFIG)
+	var config Config
+	err = loadConfigFromPath(defaultConfigPath, &config)
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Printf("No config file at %s found\n", defaultConfigPath)
+			return config, false
+		} else {
+			fmt.Println("Error loading config file:", err)
+			return config, false
+		}
+	}
+
+	path = fmt.Sprintf("%s/%s", path, CONFIG_FILE)
+
+	var localConfig WindowConfig
+	err = loadConfigFromPath(path, &localConfig)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Println("Error loading config file:", err)
+			return config, false
+		}
+	} else {
+		config.Windows = localConfig.Windows
+	}
+
+	return config, true
+}
+
+func loadConfigFromPath[T any](path string, config *T) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	err = toml.Unmarshal(data, config)
+	if err != nil {
+		return err
+	}
+
+	var windows []Window
+	switch c := any(config).(type) {
+	case *WindowConfig:
+		windows = c.Windows
+	case *Config:
+		windows = c.Windows
+	}
+
+	for i, window := range windows {
 		for j, cmd := range window.Cmd {
 			if strings.Contains(cmd, " ") {
-				config.Windows[i].Cmd[j] = fmt.Sprintf("'%s'", cmd)
+				windows[i].Cmd[j] = fmt.Sprintf("'%s'", cmd)
 			}
 		}
 	}
 
-	return config, true
+	return nil
 }
