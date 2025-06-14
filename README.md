@@ -2,6 +2,13 @@
 
 Sessionizer is a tool to search through your projects and create custom tmux sessions for each project.
 
+## Features
+Sessionizer has the following features:
+
+- Search through your projects and create custom tmux sessions for each project.
+- Keep track of the most used projects and order them accordingly.
+- Supports per-project configuration files.
+
 ## Installation
 
 You can install Sessionizer by running the following command:
@@ -67,7 +74,7 @@ The configuration file is divided into two sections:
 You can also add a `sessionizer.toml` file to the project directory to override the global configuration.
 That configuration however, does not contain the `search_paths` field as this is a global option.
 
-## Usage
+### Usage
 
 To start a session, run the following command:
 
@@ -78,5 +85,6 @@ sessionizer
 This will open a fzf window listing all directories containing a git repository inside them.
 
 When selecting a directory, it will check if the directory contains a `sessionizer.toml` file. If it does, it will override the global window configuration with the local one.
-It will then launch a tmux session with the specified windows and will focus the first window.
+It will then launch a tmux session, set its name to the name of the directory selected with the specified windows and will focus the first window.
+
 If a tmux session with the same name already exists, it will switch to that session.
