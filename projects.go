@@ -42,7 +42,7 @@ func getProject(searchPaths []Path) (Project, bool) {
 				name = strings.Split(name, "/")[1]
 			}
 			newProject := Project{Name: name, Path: projectPath}
-			if _, ok := projects[name]; ok {
+			if _, ok := projects[name]; ok && projects[name].Path != projectPath {
 				oldProject := projects[name]
 				delete(projects, name)
 
