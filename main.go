@@ -17,5 +17,7 @@ func main() {
 
 	if ok {
 		loadSession(project, &config)
+
+		updateData(project)
 	}
 }

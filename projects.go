@@ -36,14 +36,6 @@ func getProject() (string, bool) {
 
 	project := strings.Trim(string(output), "\n")
 
-	data := loadData()
-	if _, ok := data[project]; !ok {
-		data[project] = 1
-	} else {
-		data[project]++
-	}
-	storeData(data)
-
 	return project, true
 }
 

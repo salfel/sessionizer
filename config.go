@@ -33,7 +33,6 @@ name = "Terminal"
 
 func LoadConfig(path string) (Config, bool) {
 	path = fmt.Sprintf("%s/%s", path, CONFIG_FILE)
-	fmt.Print("Loading config file: ")
 
 	data, err := os.ReadFile(path)
 	if err != nil {

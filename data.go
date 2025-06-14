@@ -41,6 +41,16 @@ func loadData() map[string]int {
 	return projects
 }
 
+func updateData(project string) {
+	data := loadData()
+	if _, ok := data[project]; !ok {
+		data[project] = 1
+	} else {
+		data[project]++
+	}
+	storeData(data)
+}
+
 func getDataPath() string {
 	homeDir := getHomeDir()
 
