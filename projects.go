@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 )
 
@@ -35,6 +36,14 @@ func getProject() (string, bool) {
 
 	project := strings.Trim(string(output), "\n")
 
+	data := loadData()
+	if _, ok := data[project]; !ok {
+		data[project] = 1
+	} else {
+		data[project]++
+	}
+	storeData(data)
+
 	return project, true
 }
 
@@ -44,7 +53,7 @@ func findProjects() []string {
 		panic(err)
 	}
 
-	var projects []string
+	projects := loadData()
 
 	for _, entry := range dir {
 		if !entry.IsDir() {
@@ -55,10 +64,20 @@ func findProjects() []string {
 			continue
 		}
 
-		projects = append(projects, entry.Name())
+		if _, ok := projects[entry.Name()]; !ok {
+			projects[entry.Name()] = 0
+		}
 	}
 
-	return projects
+	keys := make([]string, 0)
+	for project := range projects {
+		keys = append(keys, project)
+	}
+
+	sortedProjects := ByCount{counts: projects, keys: keys}
+	sort.Sort(sortedProjects)
+
+	return sortedProjects.keys
 }
 
 func hasGitRepo(path string) bool {
@@ -75,4 +94,19 @@ func hasGitRepo(path string) bool {
 	}
 
 	return false
+}
+
+type ByCount struct {
+	counts map[string]int
+	keys   []string
+}
+
+func (c ByCount) Len() int {
+	return len(c.keys)
+}
+func (c ByCount) Less(i, j int) bool {
+	return c.counts[c.keys[i]] > c.counts[c.keys[j]]
+}
+func (c ByCount) Swap(i, j int) {
+	c.keys[i], c.keys[j] = c.keys[j], c.keys[i]
 }
