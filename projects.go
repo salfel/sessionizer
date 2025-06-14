@@ -20,13 +20,35 @@ func getProject(searchPaths []string) (Project, bool) {
 		return Project{}, false
 	}
 
-	projects := make([]string, 0)
+	projects := make(map[string]Project, 0)
 	for _, path := range searchPaths {
-		projects = append(projects, findProjects(path)...)
+		for _, project := range findProjects(path) {
+			newProject := Project{Name: project, Path: fmt.Sprintf("%s/%s", path, project)}
+			if _, ok := projects[project]; ok {
+				oldProject := projects[project]
+				delete(projects, project)
+
+				for _, project := range []Project{oldProject, newProject} {
+					if !strings.Contains(project.Name, "/") {
+						segments := strings.Split(project.Path, "/")
+						prefix := segments[len(segments)-2]
+						project.Name = fmt.Sprintf("%s/%s", prefix, project.Name)
+					}
+					projects[project.Name] = project
+				}
+			} else {
+				projects[project] = newProject
+			}
+		}
+	}
+
+	projectsList := make([]string, 0)
+	for project := range projects {
+		projectsList = append(projectsList, project)
 	}
 
 	cmd := exec.Command("fzf")
-	cmd.Stdin = bytes.NewBufferString(strings.Join(projects, "\n"))
+	cmd.Stdin = bytes.NewBufferString(strings.Join(projectsList, "\n"))
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -47,9 +69,9 @@ func getProject(searchPaths []string) (Project, bool) {
 		return Project{}, false
 	}
 
-	project := strings.Trim(string(output), "\n")
+	projectName := strings.Trim(string(output), "\n")
 
-	return Project{Name: project, Path: fmt.Sprintf("%s/%s", searchPaths[0], project)}, true
+	return projects[projectName], true
 }
 
 func findProjects(searchPath string) []string {
