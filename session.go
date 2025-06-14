@@ -5,10 +5,10 @@ import (
 	gotmux "github.com/GianlucaP106/gotmux/gotmux"
 )
 
-func loadSession(name string, config *Config) error {
+func loadSession(project Project, config *Config) error {
 	tmux := getTmux()
 
-	session, err := createSession(name, config)
+	session, err := createSession(project, config)
 	if err != nil {
 		fmt.Println("Error creating session:", err)
 		return err
@@ -19,20 +19,20 @@ func loadSession(name string, config *Config) error {
 	return nil
 }
 
-func createSession(name string, config *Config) (*gotmux.Session, error) {
+func createSession(project Project, config *Config) (*gotmux.Session, error) {
 	tmux := getTmux()
 
 	startWindow := config.Windows[0]
 
-	session, err := tmux.Session(name)
+	session, err := tmux.Session(project.Name)
 	if session == nil {
 		startCmd := ""
 		if len(startWindow.Cmd) > 0 {
 			startCmd = startWindow.Cmd[0]
 		}
 		session, err = tmux.NewSession(&gotmux.SessionOptions{
-			Name:           name,
-			StartDirectory: fmt.Sprintf("%s/%s/%s", DIRPATH, name, startWindow.Path),
+			Name:           project.Name,
+			StartDirectory: fmt.Sprintf("%s/%s", project.Path, startWindow.Path),
 			ShellCommand:   startCmd,
 		})
 
@@ -72,7 +72,7 @@ func createSession(name string, config *Config) (*gotmux.Session, error) {
 
 		window, err := session.NewWindow(&gotmux.NewWindowOptions{
 			WindowName:     windowConfig.Name,
-			StartDirectory: fmt.Sprintf("%s/%s/%s", DIRPATH, name, startWindow.Path),
+			StartDirectory: fmt.Sprintf("%s/%s", project.Path, startWindow.Path),
 			DoNotAttach:    true,
 		})
 		if err != nil {

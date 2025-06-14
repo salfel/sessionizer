@@ -26,7 +26,7 @@ type Window struct {
 const GLOBAL_CONFIG = "sessionizer/config.toml"
 const CONFIG_FILE = "sessionizer.toml"
 
-func loadConfig(path string) (Config, bool) {
+func loadDefaultConfig() (Config, bool) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		fmt.Println("Error getting user config dir:", err)
@@ -47,20 +47,22 @@ func loadConfig(path string) (Config, bool) {
 		}
 	}
 
+	return config, true
+}
+
+func loadConfig(path string) (WindowConfig, bool) {
 	path = fmt.Sprintf("%s/%s", path, CONFIG_FILE)
 
 	var localConfig WindowConfig
-	err = loadConfigFromPath(path, &localConfig)
+	err := loadConfigFromPath(path, &localConfig)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Println("Error loading config file:", err)
-			return config, false
 		}
-	} else {
-		config.Windows = localConfig.Windows
+		return WindowConfig{}, false
 	}
 
-	return config, true
+	return localConfig, true
 }
 
 func loadConfigFromPath[T any](path string, config *T) error {

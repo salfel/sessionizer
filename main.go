@@ -1,23 +1,23 @@
 package main
 
-import (
-	"fmt"
-)
-
-const DIRPATH = "/home/felix/Projects"
-
 func main() {
-	project, ok := getProject()
+	config, ok := loadDefaultConfig()
+	if !ok {
+		return
+	}
+
+	project, ok := getProject(config.SearchPaths)
 
 	if !ok {
 		return
 	}
 
-	config, ok := loadConfig(fmt.Sprintf("%s/%s", DIRPATH, project))
-
+	localConfig, ok := loadConfig(project.Path)
 	if ok {
-		loadSession(project, &config)
-
-		updateData(project)
+		config.Windows = localConfig.Windows
 	}
+
+	loadSession(project, &config)
+
+	updateData(project.Name)
 }

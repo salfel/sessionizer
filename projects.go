@@ -9,8 +9,21 @@ import (
 	"strings"
 )
 
-func getProject() (string, bool) {
-	projects := findProjects()
+type Project struct {
+	Name string
+	Path string
+}
+
+func getProject(searchPaths []string) (Project, bool) {
+	if len(searchPaths) == 0 {
+		fmt.Println("No search paths found, please specify at least one")
+		return Project{}, false
+	}
+
+	projects := make([]string, 0)
+	for _, path := range searchPaths {
+		projects = append(projects, findProjects(path)...)
+	}
 
 	cmd := exec.Command("fzf")
 	cmd.Stdin = bytes.NewBufferString(strings.Join(projects, "\n"))
@@ -20,10 +33,10 @@ func getProject() (string, bool) {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if exitErr.ExitCode() == 1 {
 				fmt.Println("No project found")
-				return "", false
+				return Project{}, false
 			} else if exitErr.ExitCode() == 130 {
 				fmt.Println("No project found")
-				return "", false
+				return Project{}, false
 			}
 
 			fmt.Println("Error running fzf:", exitErr)
@@ -31,16 +44,16 @@ func getProject() (string, bool) {
 
 		fmt.Println("Error running fzf:", err)
 
-		return "", false
+		return Project{}, false
 	}
 
 	project := strings.Trim(string(output), "\n")
 
-	return project, true
+	return Project{Name: project, Path: fmt.Sprintf("%s/%s", searchPaths[0], project)}, true
 }
 
-func findProjects() []string {
-	dir, err := os.ReadDir(DIRPATH)
+func findProjects(searchPath string) []string {
+	dir, err := os.ReadDir(searchPath)
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +65,7 @@ func findProjects() []string {
 			continue
 		}
 
-		if !hasGitRepo(fmt.Sprintf("%s/%s", DIRPATH, entry.Name())) {
+		if !hasGitRepo(fmt.Sprintf("%s/%s", searchPath, entry.Name())) {
 			continue
 		}
 
