@@ -33,14 +33,9 @@ func createSession(project Project, config *Config) (*gotmux.Session, error) {
 
 	session, err := tmux.Session(project.Name)
 	if session == nil {
-		startCmd := ""
-		if len(startWindow.Cmd) > 0 {
-			startCmd = startWindow.Cmd[0]
-		}
 		session, err = tmux.NewSession(&gotmux.SessionOptions{
 			Name:           project.Name,
 			StartDirectory: string(Path(project.Path).Join(startWindow.Path)),
-			ShellCommand:   startCmd,
 		})
 
 		if err != nil {
@@ -67,10 +62,7 @@ func createSession(project Project, config *Config) (*gotmux.Session, error) {
 				return nil, err
 			}
 
-			for i, cmd := range windowConfig.Cmd {
-				if i == 0 {
-					continue
-				}
+			for _, cmd := range windowConfig.Cmd {
 				panes[0].SendKeys(cmd + "\n")
 			}
 
