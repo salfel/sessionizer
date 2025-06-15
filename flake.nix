@@ -15,10 +15,10 @@
     in {
       packages.default = pkgs.buildGoModule {
         pname = "sessionizer";
-        version = "0.1.0";
+        version = "0.1.2";
         src = self;
 
-        vendorHash = "sha256-tBIGkNzvwrUzLer8Wa4mntfyym4lnAOf/PEkPS95lgs=";
+        vendorHash = "sha256-Jg6VpKxxxypfUuiAE33ZIrKxQx2D6/pEaYB9rOO6jpY=";
 
         goPackagePath = "github.com/salfel/sessionizer";
 
