@@ -47,17 +47,19 @@ Below is an example configuration file:
 
 ```toml
 search_paths = ["/home/felix/Projects"]
+
+[session]
 active = "Terminal"
 
-[[windows]]
+[[session.windows]]
 name = "Editor"
 cmd = ["nvim"]
 
-[[windows]]
+[[session.windows]]
 name = "Git"
 cmd = ["lazygit"]
 
-[[windows]]
+[[session.windows]]
 name = "Terminal"
 path = "test"
 ```
@@ -65,11 +67,12 @@ path = "test"
 The configuration file is divided into two sections:
 
 - `search_paths`: A list of paths to search for projects.
-- `windows`: A list of windows to create for each project.
-    - `name`: The name of the window.
-    - `path`: The path to the directory to start the window in.
-    - `cmd`: A list of commands to run in the window.
+- `session`: The configuration for the session, global configuration can be overriden by local config. The session prefix has to be omitted if used in a local configuration file.
     - `active`: The name of the window to activate after starting the session. If not specified, the first window will be activated.
+    - `windows`: A list of windows to create for each project.
+        - `name`: The name of the window.
+        - `path`: The path to the directory to start the window in.
+        - `cmd`: A list of commands to run in the window.
 
 ## Local Configuration
 

@@ -1,14 +1,16 @@
 search_paths = ["/home/felix/Projects"]
+
+[session]
 active = "Terminal"
 
-[[windows]]
+[[session.windows]]
 name = "Editor"
 cmd = ["nvim"]
 
-[[windows]]
+[[session.windows]]
 name = "Git"
 cmd = ["lazygit"]
 
-[[windows]]
+[[session.windows]]
 name = "Terminal"
 path = "nix"
