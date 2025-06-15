@@ -47,6 +47,7 @@ Below is an example configuration file:
 
 ```toml
 search_paths = ["/home/felix/Projects"]
+max_depth = 2 # Optional, defaults to 2
 
 [session]
 active = "Terminal"
@@ -67,6 +68,7 @@ path = "test"
 The configuration file is divided into two sections:
 
 - `search_paths`: A list of paths to search for projects.
+- `max_depth`: The maximum depth to search for projects.
 - `session`: The configuration for the session, global configuration can be overriden by local config. The session prefix has to be omitted if used in a local configuration file.
     - `active`: The name of the window to activate after starting the session. If not specified, the first window will be activated.
     - `windows`: A list of windows to create for each project.

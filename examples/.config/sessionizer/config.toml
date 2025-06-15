@@ -1,4 +1,5 @@
 search_paths = ["/home/felix/Projects"]
+max_depth = 2
 
 [session]
 active = "Terminal"
