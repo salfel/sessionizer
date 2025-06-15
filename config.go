@@ -11,10 +11,12 @@ import (
 type Config struct {
 	SearchPaths []Path   `toml:"search_paths"`
 	Windows     []Window `toml:"windows"`
+	Active      string   `toml:"active"`
 }
 
 type WindowConfig struct {
 	Windows []Window `toml:"windows"`
+	Active  string   `toml:"active"`
 }
 
 type Window struct {

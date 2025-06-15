@@ -17,6 +17,7 @@ func main() {
 	localConfig, ok := loadConfig(project.Path)
 	if ok {
 		config.Windows = localConfig.Windows
+		config.Active = localConfig.Active
 	}
 
 	if len(config.Windows) == 0 {
@@ -24,7 +25,9 @@ func main() {
 		return
 	}
 
-	loadSession(project, &config)
+	if err := loadSession(project, &config); err != nil {
+		return
+	}
 
 	updateData(project.Path)
 }

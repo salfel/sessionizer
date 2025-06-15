@@ -23,6 +23,17 @@ func loadSession(project Project, config *Config) error {
 		session.Attach()
 	}
 
+	if config.Active != "" {
+		fmt.Println("Active window:", config.Active)
+		window, err := session.GetWindowByName(config.Active)
+		if err != nil {
+			fmt.Println("There is no window with the name: ", config.Active)
+			fmt.Println("Please consider changing the active property in your config file", err)
+			return err
+		}
+		window.Select()
+	}
+
 	return nil
 }
 
