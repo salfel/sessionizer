@@ -47,6 +47,7 @@ Below is an example configuration file:
 
 ```toml
 search_paths = ["/home/felix/Projects"]
+active = "Terminal"
 
 [[windows]]
 name = "Editor"
@@ -68,6 +69,7 @@ The configuration file is divided into two sections:
     - `name`: The name of the window.
     - `path`: The path to the directory to start the window in.
     - `cmd`: A list of commands to run in the window.
+    - `active`: The name of the window to activate after starting the session. If not specified, the first window will be activated.
 
 ## Local Configuration
 
