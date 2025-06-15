@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"sort"
 	"strings"
 )
+
+var excluded_directories = []string{"node_modules", "vendor", "target", "build", "dist", "out"}
 
 type Path string
 
@@ -37,7 +40,7 @@ func getProject(config Config) (Project, bool) {
 
 	projects := make(map[string]Project, 0)
 	for _, path := range config.SearchPaths {
-		for _, project := range findProjects(path, config.MaxDepth) {
+		for _, project := range discoverProjects(path, config.MaxDepth) {
 			if project.Name == "" {
 				fmt.Println("2newline in string", project.Path, project.Count)
 			}
@@ -107,12 +110,10 @@ func getProject(config Config) (Project, bool) {
 	return projects[projectName], true
 }
 
-func findProjects2(searchPath Path, data map[Path]int, depth int, maxDepth int) []Project {
+func findProjects(searchPath Path, data map[Path]int, depth int, maxDepth int) {
 	if depth > maxDepth {
-		return []Project{}
+		return
 	}
-
-	projects := make([]Project, 0)
 
 	dir, err := os.ReadDir(string(searchPath))
 	if err != nil {
@@ -120,30 +121,30 @@ func findProjects2(searchPath Path, data map[Path]int, depth int, maxDepth int) 
 	}
 
 	for _, entry := range dir {
-		if !entry.IsDir() {
+		if entry.IsDir() && entry.Name() == ".git" {
+			if _, ok := data[searchPath]; !ok {
+				data[searchPath] = 0
+			}
+
+			return
+		}
+	}
+
+	for _, entry := range dir {
+		if !entry.IsDir() || slices.Contains(excluded_directories, entry.Name()) {
 			continue
 		}
 
 		path := Path(searchPath).Join(entry.Name())
 
-		if !hasGitRepo(string(path)) {
-			projects = append(projects, findProjects2(path, data, depth+1, maxDepth)...)
-
-			continue
-		}
-
-		if _, ok := data[path]; !ok {
-			data[path] = 0
-		}
+		findProjects(path, data, depth+1, maxDepth)
 	}
-
-	return projects
 }
 
-func findProjects(searchPath Path, maxDepth int) []Project {
+func discoverProjects(searchPath Path, maxDepth int) []Project {
 	data := loadData()
 
-	findProjects2(searchPath, data, 0, maxDepth)
+	findProjects(searchPath, data, 0, maxDepth)
 
 	projects := make([]Project, 0)
 	for project := range data {
@@ -155,22 +156,6 @@ func findProjects(searchPath Path, maxDepth int) []Project {
 	}
 
 	return projects
-}
-
-func hasGitRepo(path string) bool {
-	dir, err := os.ReadDir(path)
-	if err != nil {
-		fmt.Println("Error reading directory:", err)
-		return false
-	}
-
-	for _, entry := range dir {
-		if entry.Name() == ".git" {
-			return true
-		}
-	}
-
-	return false
 }
 
 type ByCount struct {
