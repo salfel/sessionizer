@@ -16,7 +16,7 @@ You can install Sessionizer by running the following command:
 go install github.com/salfel/sessionizer@latest
 ```
 
-Because Sessionizer uses fzf to select the project, you will have to install fzf through your package manager.
+Because Sessionizer uses fzf to select the project, you will have to install `fzf` through your package manager.
 
 ### Nix
 
