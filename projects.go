@@ -83,6 +83,11 @@ func getProject(config Config) (Project, bool) {
 		}
 	}
 
+	if len(projectNames) == 0 {
+		fmt.Println("No projects found")
+		return Project{}, false
+	}
+
 	cmd := exec.Command("fzf")
 	cmd.Stdin = bytes.NewBufferString(strings.Join(projectNames, "\n"))
 
@@ -93,7 +98,7 @@ func getProject(config Config) (Project, bool) {
 				fmt.Println("No project found")
 				return Project{}, false
 			} else if exitErr.ExitCode() == 130 {
-				fmt.Println("No project found")
+				fmt.Println("No project selected")
 				return Project{}, false
 			}
 
