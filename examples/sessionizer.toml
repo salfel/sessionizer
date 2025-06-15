@@ -1,0 +1,9 @@
+active = "Terminal"
+
+[[windows]]
+name = "Editor"
+cmd = ["nvim"]
+
+[[windows]]
+name = "Tests"
+path = test
