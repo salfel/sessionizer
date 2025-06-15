@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	SearchPaths []Path        `toml:"search_paths"`
+	MaxDepth    int           `toml:"max_depth"`
 	Session     SessionConfig `toml:"session"`
 }
 
@@ -27,6 +28,8 @@ type Window struct {
 const GLOBAL_CONFIG = "sessionizer/config.toml"
 const CONFIG_FILE = "sessionizer.toml"
 
+const DEFAULT_MAX_DEPTH = 2
+
 func loadDefaultConfig() (Config, bool) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
@@ -35,7 +38,7 @@ func loadDefaultConfig() (Config, bool) {
 	}
 
 	defaultConfigPath := Path(configDir).Join(GLOBAL_CONFIG)
-	var config Config
+	config := Config{MaxDepth: DEFAULT_MAX_DEPTH}
 	err = loadConfigFromPath(defaultConfigPath, &config)
 
 	if err != nil {

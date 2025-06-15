@@ -29,15 +29,15 @@ type Project struct {
 	Count int
 }
 
-func getProject(searchPaths []Path) (Project, bool) {
-	if len(searchPaths) == 0 {
+func getProject(config Config) (Project, bool) {
+	if len(config.SearchPaths) == 0 {
 		fmt.Println("No search paths found, please specify at least one")
 		return Project{}, false
 	}
 
 	projects := make(map[string]Project, 0)
-	for _, path := range searchPaths {
-		for _, project := range findProjects(path) {
+	for _, path := range config.SearchPaths {
+		for _, project := range findProjects(path, config.MaxDepth) {
 			if project.Name == "" {
 				fmt.Println("2newline in string", project.Path, project.Count)
 			}
@@ -107,22 +107,28 @@ func getProject(searchPaths []Path) (Project, bool) {
 	return projects[projectName], true
 }
 
-func findProjects(searchPath Path) []Project {
+func findProjects2(searchPath Path, data map[Path]int, depth int, maxDepth int) []Project {
+	if depth > maxDepth {
+		return []Project{}
+	}
+
+	projects := make([]Project, 0)
+
 	dir, err := os.ReadDir(string(searchPath))
 	if err != nil {
 		panic(err)
 	}
-
-	data := loadData()
 
 	for _, entry := range dir {
 		if !entry.IsDir() {
 			continue
 		}
 
-		path := Path(fmt.Sprintf("%s/%s", searchPath, entry.Name()))
+		path := Path(searchPath).Join(entry.Name())
 
 		if !hasGitRepo(string(path)) {
+			projects = append(projects, findProjects2(path, data, depth+1, maxDepth)...)
+
 			continue
 		}
 
@@ -130,6 +136,14 @@ func findProjects(searchPath Path) []Project {
 			data[path] = 0
 		}
 	}
+
+	return projects
+}
+
+func findProjects(searchPath Path, maxDepth int) []Project {
+	data := loadData()
+
+	findProjects2(searchPath, data, 0, maxDepth)
 
 	projects := make([]Project, 0)
 	for project := range data {

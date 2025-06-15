@@ -8,7 +8,7 @@ func main() {
 		return
 	}
 
-	project, ok := getProject(config.SearchPaths)
+	project, ok := getProject(config)
 
 	if !ok {
 		return
