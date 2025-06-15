@@ -16,11 +16,10 @@ func main() {
 
 	localConfig, ok := loadConfig(project.Path)
 	if ok {
-		config.Windows = localConfig.Windows
-		config.Active = localConfig.Active
+		config.SessionConfig = localConfig
 	}
 
-	if len(config.Windows) == 0 {
+	if len(config.SessionConfig.Windows) == 0 {
 		fmt.Println("No windows found in config")
 		return
 	}

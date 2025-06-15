@@ -9,12 +9,12 @@ import (
 )
 
 type Config struct {
-	SearchPaths []Path   `toml:"search_paths"`
-	Windows     []Window `toml:"windows"`
-	Active      string   `toml:"active"`
+	SearchPaths []Path `toml:"search_paths"`
+
+	SessionConfig
 }
 
-type WindowConfig struct {
+type SessionConfig struct {
 	Windows []Window `toml:"windows"`
 	Active  string   `toml:"active"`
 }
@@ -52,16 +52,16 @@ func loadDefaultConfig() (Config, bool) {
 	return config, true
 }
 
-func loadConfig(path Path) (WindowConfig, bool) {
+func loadConfig(path Path) (SessionConfig, bool) {
 	path = path.Join(CONFIG_FILE)
 
-	var localConfig WindowConfig
+	var localConfig SessionConfig
 	err := loadConfigFromPath(path, &localConfig)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Println("Error loading config file:", err)
 		}
-		return WindowConfig{}, false
+		return SessionConfig{}, false
 	}
 
 	return localConfig, true
@@ -80,10 +80,10 @@ func loadConfigFromPath[T any](path Path, config *T) error {
 
 	var windows []Window
 	switch c := any(config).(type) {
-	case *WindowConfig:
+	case *SessionConfig:
 		windows = c.Windows
 	case *Config:
-		windows = c.Windows
+		windows = c.SessionConfig.Windows
 	}
 
 	for i, window := range windows {
