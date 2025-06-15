@@ -21,7 +21,7 @@ type SessionConfig struct {
 
 type Window struct {
 	Name string   `toml:"name"`
-	Path string   `toml:"path"`
+	Path Path     `toml:"path"`
 	Cmd  []string `toml:"cmd"`
 }
 

@@ -46,7 +46,7 @@ func createSession(project Project, config *Config) (*gotmux.Session, error) {
 	if session == nil {
 		session, err = tmux.NewSession(&gotmux.SessionOptions{
 			Name:           project.Name,
-			StartDirectory: string(Path(project.Path).Join(startWindow.Path)),
+			StartDirectory: string(Path(project.Path).Join(startWindow.Path.String())),
 		})
 
 		if err != nil {
@@ -82,7 +82,7 @@ func createSession(project Project, config *Config) (*gotmux.Session, error) {
 
 		window, err := session.NewWindow(&gotmux.NewWindowOptions{
 			WindowName:     windowConfig.Name,
-			StartDirectory: string(Path(project.Path).Join(windowConfig.Path)),
+			StartDirectory: string(Path(project.Path).Join(windowConfig.Path.String())),
 			DoNotAttach:    true,
 		})
 		if err != nil {
