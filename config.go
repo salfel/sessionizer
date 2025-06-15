@@ -9,9 +9,8 @@ import (
 )
 
 type Config struct {
-	SearchPaths []Path `toml:"search_paths"`
-
-	SessionConfig
+	SearchPaths []Path        `toml:"search_paths"`
+	Session     SessionConfig `toml:"session"`
 }
 
 type SessionConfig struct {
@@ -83,7 +82,7 @@ func loadConfigFromPath[T any](path Path, config *T) error {
 	case *SessionConfig:
 		windows = c.Windows
 	case *Config:
-		windows = c.SessionConfig.Windows
+		windows = c.Session.Windows
 	}
 
 	for i, window := range windows {

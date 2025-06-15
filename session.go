@@ -23,11 +23,11 @@ func loadSession(project Project, config *Config) error {
 		session.Attach()
 	}
 
-	if config.SessionConfig.Active != "" {
-		fmt.Println("Active window:", config.SessionConfig.Active)
-		window, err := session.GetWindowByName(config.SessionConfig.Active)
+	if config.Session.Active != "" {
+		fmt.Println("Active window:", config.Session.Active)
+		window, err := session.GetWindowByName(config.Session.Active)
 		if err != nil {
-			fmt.Println("There is no window with the name: ", config.SessionConfig.Active)
+			fmt.Println("There is no window with the name: ", config.Session.Active)
 			fmt.Println("Please consider changing the active property in your config file", err)
 			return err
 		}
@@ -40,7 +40,7 @@ func loadSession(project Project, config *Config) error {
 func createSession(project Project, config *Config) (*gotmux.Session, error) {
 	tmux := getTmux()
 
-	startWindow := config.SessionConfig.Windows[0]
+	startWindow := config.Session.Windows[0]
 
 	session, err := tmux.Session(project.Name)
 	if session == nil {
@@ -57,7 +57,7 @@ func createSession(project Project, config *Config) (*gotmux.Session, error) {
 		return session, nil
 	}
 
-	for idx, windowConfig := range config.SessionConfig.Windows {
+	for idx, windowConfig := range config.Session.Windows {
 		if idx == 0 {
 			windows, err := session.ListWindows()
 			if err != nil {
