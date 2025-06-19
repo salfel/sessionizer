@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	toml "github.com/pelletier/go-toml/v2"
 )
@@ -78,22 +77,6 @@ func loadConfigFromPath[T any](path Path, config *T) error {
 	err = toml.Unmarshal(data, config)
 	if err != nil {
 		return err
-	}
-
-	var windows []Window
-	switch c := any(config).(type) {
-	case *SessionConfig:
-		windows = c.Windows
-	case *Config:
-		windows = c.Session.Windows
-	}
-
-	for i, window := range windows {
-		for j, cmd := range window.Cmd {
-			if strings.Contains(cmd, " ") {
-				windows[i].Cmd[j] = fmt.Sprintf("'%s'", cmd)
-			}
-		}
 	}
 
 	return nil
