@@ -5,3 +5,5 @@ go 1.24.3
 require github.com/pelletier/go-toml/v2 v2.2.4
 
 require github.com/GianlucaP106/gotmux v0.5.0
+
+require github.com/mattn/go-sqlite3 v1.14.42 // indirect

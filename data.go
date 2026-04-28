@@ -3,65 +3,103 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
-	"github.com/pelletier/go-toml/v2"
+	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
-// TODO: Store the data in a sqlite db and add timestamps to it for better filtering
+const DATA_DIR = "sessionizer"
+const DATABASE_FILE = ".sessionizer.sqlite"
 
-const DATA_FILE = ".sessionizer.toml"
+var db *sql.DB
 
-func storeData(projects map[Path]int) {
-	data, err := toml.Marshal(projects)
+func loadDatabase() bool {
+	data_home, ok := os.LookupEnv("XDG_DATA_HOME")
+	if !ok {
+		home_dir, err := os.UserHomeDir()
+		if err != nil {
+			fmt.Println("Error getting home directory")
+			return false
+		}
+		data_home = string(Path(home_dir).Join(".local/share"))
+	}
+	dirPath := Path(data_home).Join(DATA_DIR)
+	path := dirPath.Join(DATABASE_FILE)
+
+	err := os.MkdirAll(dirPath.String(), 0755)
 	if err != nil {
-		fmt.Println("Error marshalling config file:", err)
-		return
+		fmt.Println("Error: ", err)
 	}
 
-	err = os.WriteFile(string(getDataPath()), data, 0644)
+	db, err = sql.Open("sqlite3", path.String())
 	if err != nil {
-		fmt.Println("Error writing config file:", err)
-		return
+		fmt.Println("Error opening database:", err)
+		return false
 	}
+
+	createTable()
+
+	return true
 }
 
-func loadData() map[Path]int {
-	data, err := os.ReadFile(string(getDataPath()))
+func createTable() bool {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS projects (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			path TEXT NOT NULL,
+			timestamp DATETIME NOT NULL
+		);
+	`)
+
 	if err != nil {
-		return map[Path]int{}
+		fmt.Println(err)
+		return false
 	}
 
-	var projects map[Path]int
-	err = toml.Unmarshal(data, &projects)
+	return true
+}
+
+func getProjects() []Project {
+	rows, err := db.Query(`
+		SELECT 
+			path, 
+			SUM(
+				CASE
+					WHEN timestamp >= datetime('now', '-7 days') THEN 8
+					WHEN timestamp >= datetime('now', '-30 days') THEN 2
+					WHEN timestamp >= datetime('now', '-90 days') THEN 1
+					ELSE 0
+				END
+			) as count
+		FROM projects 
+		WHERE timestamp >= datetime('now', '-30 days') 
+		GROUP BY path
+		ORDER BY count
+	`)
 	if err != nil {
-		fmt.Println("Error unmarshalling config file:", err)
-		return map[Path]int{}
+		return nil
+	}
+	defer rows.Close()
+
+	var projects []Project
+	for rows.Next() {
+		var project Project
+		rows.Scan(&project.Path, &project.Count)
+		project.Name = project.Path.String()
+		projects = append(projects, project)
 	}
 
 	return projects
 }
 
-func updateData(projectPath Path) {
-	data := loadData()
-	if _, ok := data[projectPath]; !ok {
-		data[projectPath] = 1
-	} else {
-		data[projectPath]++
-	}
-	storeData(data)
-}
-
-func getDataPath() Path {
-	homeDir := getHomeDir()
-
-	return Path(homeDir).Join(DATA_FILE)
-}
-
-func getHomeDir() string {
-	homeDir, err := os.UserHomeDir()
+func insertProject(db *sql.DB, project string) bool {
+	_, err := db.Exec(`INSERT INTO projects (path, timestamp) VALUES (?, ?)`, project, time.Now())
 	if err != nil {
-		panic(fmt.Sprintf("Error getting home directory: %s", err))
+		fmt.Println(err)
+		return false
 	}
 
-	return homeDir
+	return true
 }

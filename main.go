@@ -1,12 +1,19 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
 	config, ok := loadDefaultConfig()
 	if !ok {
 		return
 	}
+
+	if ok := loadDatabase(); !ok {
+		return
+	}
+	defer db.Close()
 
 	project, ok := getProject(config)
 
@@ -28,5 +35,5 @@ func main() {
 		return
 	}
 
-	updateData(project.Path)
+	insertProject(db, project.Path.String())
 }

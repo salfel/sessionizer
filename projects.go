@@ -38,45 +38,18 @@ func getProject(config Config) (Project, bool) {
 		return Project{}, false
 	}
 
-	projects := make(map[string]Project, 0)
-	for _, path := range config.SearchPaths {
-		for _, project := range discoverProjects(path, config.MaxDepth) {
-			if project.Name == "" {
-				fmt.Println("2newline in string", project.Path, project.Count)
-			}
-			if _, ok := projects[project.Name]; ok && projects[project.Name].Path != project.Path {
-				oldProject := projects[project.Name]
-				delete(projects, project.Name)
+	projects := discoverProjects(config.SearchPaths[0], config.MaxDepth)
 
-				for _, project := range []Project{oldProject, project} {
-					if !strings.Contains(project.Name, "/") {
-						segments := project.Path.Segments()
-						prefix := segments[len(segments)-2]
-						project.Name = fmt.Sprintf("%s/%s", prefix, project.Name)
-					}
-					projects[project.Name] = project
-				}
-			} else {
-				projects[project.Name] = project
-			}
-		}
-	}
-
-	projectList := make([]Project, 0)
-	for _, project := range projects {
-		projectList = append(projectList, project)
-	}
-
-	sort.Slice(projectList, func(i, j int) bool {
-		if projectList[i].Count != projectList[j].Count {
-			return projectList[i].Count > projectList[j].Count
+	sort.Slice(projects, func(i, j int) bool {
+		if projects[i].Count != projects[j].Count {
+			return projects[i].Count > projects[j].Count
 		}
 
-		return projectList[i].Name < projectList[j].Name
+		return strings.ToLower(projects[i].Name) < strings.ToLower(projects[j].Name)
 	})
 
-	projectNames := make([]string, 0)
-	for _, project := range projectList {
+	projectNames := make([]string, 0, len(projects))
+	for _, project := range projects {
 		projectNames = append(projectNames, project.Name)
 		if project.Name == "" {
 			fmt.Println("newline in string", project.Path, project.Count)
@@ -88,18 +61,33 @@ func getProject(config Config) (Project, bool) {
 		return Project{}, false
 	}
 
+	projectName, ok := launchFzf(projectNames)
+	if !ok {
+		return Project{}, false
+	}
+
+	for _, project := range projects {
+		if project.Name == projectName {
+			return project, true
+		}
+	}
+
+	return Project{}, false
+}
+
+func launchFzf(names []string) (string, bool) {
 	cmd := exec.Command("fzf")
-	cmd.Stdin = bytes.NewBufferString(strings.Join(projectNames, "\n"))
+	cmd.Stdin = bytes.NewBufferString(strings.Join(names, "\n"))
 
 	output, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if exitErr.ExitCode() == 1 {
 				fmt.Println("No project found")
-				return Project{}, false
+				return "", false
 			} else if exitErr.ExitCode() == 130 {
 				fmt.Println("No project selected")
-				return Project{}, false
+				return "", false
 			}
 
 			fmt.Println("Error running fzf:", exitErr)
@@ -107,15 +95,13 @@ func getProject(config Config) (Project, bool) {
 
 		fmt.Println("Error running fzf:", err)
 
-		return Project{}, false
+		return "", false
 	}
 
-	projectName := strings.Trim(string(output), "\n")
-
-	return projects[projectName], true
+	return strings.Trim(string(output), "\n"), true
 }
 
-func findProjects(searchPath Path, data map[Path]int, depth int, maxDepth int) {
+func findProjects(searchPath Path, data *[]Project, depth int, maxDepth int) {
 	if depth > maxDepth {
 		return
 	}
@@ -127,8 +113,15 @@ func findProjects(searchPath Path, data map[Path]int, depth int, maxDepth int) {
 
 	for _, entry := range dir {
 		if entry.IsDir() && entry.Name() == ".git" {
-			if _, ok := data[searchPath]; !ok {
-				data[searchPath] = 0
+			found := false
+			for _, project := range *data {
+				if project.Path == searchPath {
+					found = true
+					break
+				}
+			}
+			if !found {
+				*data = append(*data, Project{Name: searchPath.String(), Path: searchPath, Count: 0})
 			}
 
 			return
@@ -147,33 +140,14 @@ func findProjects(searchPath Path, data map[Path]int, depth int, maxDepth int) {
 }
 
 func discoverProjects(searchPath Path, maxDepth int) []Project {
-	data := loadData()
+	data := getProjects()
 
-	findProjects(searchPath, data, 0, maxDepth)
+	findProjects(searchPath, &data, 0, maxDepth)
 
-	projects := make([]Project, 0)
-	for project := range data {
-		name := project.Segments()[len(project.Segments())-1]
-		if strings.Contains(name, "/") {
-			name = strings.Split(name, "/")[1]
-		}
-		projects = append(projects, Project{Name: name, Path: Path(project), Count: data[project]})
+	for i, project := range data {
+		name := strings.Replace(project.Path.String(), searchPath.String()+"/", "", 1)
+		data[i].Name = name
 	}
 
-	return projects
-}
-
-type ByCount struct {
-	counts map[Path]int
-	keys   []Path
-}
-
-func (c ByCount) Len() int {
-	return len(c.keys)
-}
-func (c ByCount) Less(i, j int) bool {
-	return c.counts[c.keys[i]] > c.counts[c.keys[j]]
-}
-func (c ByCount) Swap(i, j int) {
-	c.keys[i], c.keys[j] = c.keys[j], c.keys[i]
+	return data
 }
