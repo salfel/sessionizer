@@ -73,9 +73,7 @@ func createSession(project Project, config *Config) (*gotmux.Session, error) {
 				return nil, err
 			}
 
-			for _, cmd := range windowConfig.Cmd {
-				panes[0].SendKeys(cmd + "\n")
-			}
+			panes[0].SendKeys(windowConfig.Cmd + "\n")
 
 			continue
 		}
@@ -100,9 +98,7 @@ func createSession(project Project, config *Config) (*gotmux.Session, error) {
 			return nil, err
 		}
 
-		for _, cmd := range windowConfig.Cmd {
-			panes[0].SendKeys(cmd + "\n")
-		}
+		panes[0].SendKeys(windowConfig.Cmd + "\n")
 	}
 
 	return session, nil

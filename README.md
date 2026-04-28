@@ -54,11 +54,11 @@ active = "Terminal"
 
 [[session.windows]]
 name = "Editor"
-cmd = ["nvim"]
+cmd = "nvim"
 
 [[session.windows]]
 name = "Git"
-cmd = ["lazygit"]
+cmd = "lazygit"
 
 [[session.windows]]
 name = "Terminal"

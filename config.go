@@ -19,9 +19,9 @@ type SessionConfig struct {
 }
 
 type Window struct {
-	Name string   `toml:"name"`
-	Path Path     `toml:"path"`
-	Cmd  []string `toml:"cmd"`
+	Name string `toml:"name"`
+	Path Path   `toml:"path"`
+	Cmd  string `toml:"cmd"`
 }
 
 const GLOBAL_CONFIG = "sessionizer/config.toml"

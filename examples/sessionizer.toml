@@ -2,7 +2,7 @@ active = "Terminal"
 
 [[windows]]
 name = "Editor"
-cmd = ["nvim"]
+cmd = "nvim"
 
 [[windows]]
 name = "Tests"
