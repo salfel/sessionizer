@@ -15,7 +15,7 @@
     in {
       packages.default = pkgs.buildGoModule {
         pname = "sessionizer";
-        version = "v0.1.7";
+        version = "v0.1.8";
         src = self;
 
         vendorHash = "sha256-5s5c4gwtc1thtUUkl8+ntwz1JwJ+UHJGm2voyLJVEeQ=";

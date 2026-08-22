@@ -67,14 +67,12 @@ func getProjects() []Project {
 			path, 
 			SUM(
 				CASE
-					WHEN timestamp >= datetime('now', '-7 days') THEN 8
+					WHEN timestamp >= datetime('now', '-7 days') THEN 4
 					WHEN timestamp >= datetime('now', '-30 days') THEN 2
-					WHEN timestamp >= datetime('now', '-90 days') THEN 1
-					ELSE 0
+					ELSE 1
 				END
 			) as count
 		FROM projects 
-		WHERE timestamp >= datetime('now', '-30 days') 
 		GROUP BY path
 		ORDER BY count
 	`)
@@ -89,6 +87,10 @@ func getProjects() []Project {
 		rows.Scan(&project.Path, &project.Count)
 		project.Name = project.Path.String()
 		projects = append(projects, project)
+	}
+
+	if rows.Err() != nil {
+		return nil
 	}
 
 	return projects
